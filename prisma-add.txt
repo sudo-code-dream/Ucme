@@ -1,0 +1,8 @@
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  ucId      String
+  createdAt DateTime @default(now())
+
+  @@index([ucId, createdAt])
+}

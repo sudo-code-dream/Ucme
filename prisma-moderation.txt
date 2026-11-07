@@ -1,0 +1,27 @@
+1) In model User, add these two lines:
+  role  Role   @default(USER)
+  flags Flag[]
+
+2) In model Report, add these two lines:
+  hidden Boolean @default(false)
+  flags  Flag[]
+
+3) Add at the end of the file:
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Flag {
+  id         String   @id @default(cuid())
+  reportId   String
+  reporterId String
+  reason     String
+  resolved   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  report     Report   @relation(fields: [reportId], references: [id])
+  reporter   User     @relation(fields: [reporterId], references: [id])
+
+  @@unique([reportId, reporterId])
+}

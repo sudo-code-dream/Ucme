@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum ReportType {
+  LOST
+  FOUND
+}
+
+enum ReportStatus {
+  PENDING
+  ACTIVE
+  MATCHED
+  RESOLVED
+}
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id            String         @id @default(cuid())
+  ucId          String         @unique
+  firstName     String
+  middleName    String?
+  lastName      String
+  suffix        String?
+  email         String         @unique
+  contact       String
+  campus        String
+  college       String
+  program       String
+  yearLevel     String
+  section       String?
+  passwordHash  String
+  role          Role           @default(USER)
+  createdAt     DateTime       @default(now())
+  reports       Report[]
+  claims        Claim[]
+  saved         SavedItem[]
+  notifications Notification[]
+  flags         Flag[]
+}
+
+model Report {
+  id          String       @id @default(cuid())
+  ref         String       @unique
+  type        ReportType
+  status      ReportStatus @default(ACTIVE)
+  title       String
+  category    String
+  location    String
+  occurredOn  DateTime
+  approxTime  String?
+  description String
+  // PRIVATE: shown only to the owner/staff, never on public pages
+  features    String
+  photoUrl    String?
+  // found reports only
+  keptAt      String?
+  hidden      Boolean      @default(false)
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  claims      Claim[]
+  saved       SavedItem[]
+  flags       Flag[]
+  createdAt   DateTime     @default(now())
+
+  @@index([type, status, category])
+}
+
+model Claim {
+  id           String      @id @default(cuid())
+  reportId     String
+  claimantId   String
+  // PRIVATE ownership details; visible only to the report owner
+  verification String
+  status       ClaimStatus @default(PENDING)
+  createdAt    DateTime    @default(now())
+  report       Report      @relation(fields: [reportId], references: [id])
+  claimant     User        @relation(fields: [claimantId], references: [id])
+}
+
+model SavedItem {
+  userId   String
+  reportId String
+  user     User   @relation(fields: [userId], references: [id])
+  report   Report @relation(fields: [reportId], references: [id])
+
+  @@id([userId, reportId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  ucId      String
+  createdAt DateTime @default(now())
+
+  @@index([ucId, createdAt])
+}
+
+model Flag {
+  id         String   @id @default(cuid())
+  reportId   String
+  reporterId String
+  reason     String
+  resolved   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  report     Report   @relation(fields: [reportId], references: [id])
+  reporter   User     @relation(fields: [reporterId], references: [id])
+
+  @@unique([reportId, reporterId])
+}

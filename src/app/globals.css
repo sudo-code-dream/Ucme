@@ -1,0 +1,11 @@
+@tailwind base; @tailwind components; @tailwind utilities;
+body { @apply bg-uc-bg text-uc-text antialiased; font-size: 15px; }
+.input { @apply w-full rounded-md border border-uc-line bg-white px-3 py-2 text-sm placeholder:text-slate-400 outline-none transition focus:border-uc focus:ring-2 focus:ring-uc/20; }
+.btn { @apply inline-flex items-center justify-center gap-2 rounded-md bg-uc px-4 py-2 text-sm font-semibold text-white transition hover:bg-uc-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-uc disabled:cursor-not-allowed disabled:opacity-60; }
+.btn-gold { @apply inline-flex items-center justify-center gap-2 rounded-md bg-uc-gold px-4 py-2 text-sm font-semibold text-uc-dark transition hover:brightness-95; }
+.btn-ghost { @apply inline-flex items-center justify-center gap-2 rounded-md border border-uc-line bg-white px-4 py-2 text-sm font-semibold transition hover:border-uc hover:text-uc disabled:opacity-60; }
+.label { @apply mb-1 block text-sm font-semibold text-uc-text; }
+.card { @apply rounded-md border border-uc-line bg-white shadow-sm; }
+.badge { @apply inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold; }
+.page-title { @apply text-2xl font-bold tracking-tight text-uc-dark; }
+.th { @apply px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-uc-muted; }
