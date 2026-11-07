@@ -15,7 +15,6 @@ export async function createReport(type: "LOST" | "FOUND", _: ReportState, fd: F
   const user = await requireUser(); // identity always comes from the session, never from the form
   const p = reportSchema.safeParse(Object.fromEntries(fd));
   if (!p.success) return { error: "Please fix the highlighted fields.", fieldErrors: fieldErrs(p.error) };
-  if (type === "FOUND" && !p.data.keptAt) return { error: "Please fix the highlighted fields.", fieldErrors: { keptAt: "Tell us where the item is kept" } };
   let photoUrl: string | null = null;
   const photo = fd.get("photo");
   if (photo instanceof File && photo.size > 0) {
@@ -24,9 +23,10 @@ export async function createReport(type: "LOST" | "FOUND", _: ReportState, fd: F
   }
   const ref = `${type === "LOST" ? "LST" : "FND"}-${new Date().toISOString().slice(2, 7).replace("-", "")}-${randomBytes(2).toString("hex").toUpperCase()}`;
   const { occurredOn, keptAt, ...rest } = p.data;
-  const created = await db.report.create({ data: { ...rest, photoUrl, ref, type, userId: user.id, occurredOn: new Date(occurredOn), keptAt: type === "FOUND" ? keptAt : null } });
+  const created = await db.report.create({ data: { ...rest, photoUrl, ref, type, userId: user.id, occurredOn: new Date(occurredOn), keptAt: type === "FOUND" ? "Prefect of Discipline Office" : null, status: type === "FOUND" ? "PENDING" : "ACTIVE" } });
+  if (type === "FOUND") await db.notification.create({ data: { userId: user.id, message: `Please bring your found item (${created.ref}) to the Prefect of Discipline Office. It will be listed once staff confirm receipt.` } });
   try { // matching must never block a submission
-    const matches = await findMatches(created);
+    const matches = type === "LOST" ? await findMatches(created) : []; // found items are matched once the office confirms receipt
     if (matches.length) {
       await db.notification.create({ data: { userId: user.id, message: `A possible match was found for your ${type === "LOST" ? "lost" : "found"} item (${created.ref}). Check Lost & Found.` } });
       const owners = await db.report.findMany({ where: { id: { in: matches.map((m) => m.id) } }, select: { userId: true, ref: true } });
@@ -50,10 +50,9 @@ export async function submitClaim(reportId: string, _: ReportState, fd: FormData
   const p = claimSchema.safeParse(Object.fromEntries(fd));
   if (!p.success) return { error: p.error.issues[0].message };
   const report = await db.report.findUnique({ where: { id: reportId } });
-  if (!report || report.type !== "FOUND" || report.status === "RESOLVED" || report.status === "PENDING" || report.hidden) return { error: "This item cannot be claimed." };
+  if (!report || report.type !== "FOUND" || report.status !== "ACTIVE" || report.hidden) return { error: "This item cannot be claimed." };
   if (report.userId === user.id) return { error: "You cannot claim your own report." };
   if (await db.claim.findFirst({ where: { reportId, claimantId: user.id, status: "PENDING" } })) return { error: "You already have a pending claim for this item." };
   await db.claim.create({ data: { reportId, claimantId: user.id, verification: p.data.verification } });
-  await db.notification.create({ data: { userId: report.userId, message: `Someone submitted a claim for your found item (${report.ref}).` } });
   return { ok: true };
 }

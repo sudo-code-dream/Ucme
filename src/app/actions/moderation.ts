@@ -4,9 +4,10 @@ import { db } from "@/lib/db";
 import { requireAdmin, requireUser } from "@/lib/auth";
 import { deleteImage } from "@/lib/cloudinary";
 import { FLAG_REASONS } from "@/lib/moderation";
+import { findMatches } from "@/lib/matching";
 
 export type ModState = { error?: string; ok?: boolean };
-const refresh = () => { revalidatePath("/admin"); revalidatePath("/lost-and-found"); revalidatePath("/dashboard"); };
+const refresh = () => { revalidatePath("/admin"); revalidatePath("/lost-and-found"); revalidatePath("/dashboard"); revalidatePath("/my-reports"); };
 
 export async function flagReport(reportId: string, _: ModState, fd: FormData): Promise<ModState> {
   const user = await requireUser();
@@ -50,15 +51,53 @@ export async function deleteReport(reportId: string): Promise<void> {
   refresh();
 }
 
+/** Office staff confirm they physically received a found item; only then does the report go public. */
+export async function confirmReceipt(reportId: string): Promise<void> {
+  await requireAdmin();
+  const r = await db.report.findUnique({ where: { id: reportId } });
+  if (!r || r.type !== "FOUND" || r.status !== "PENDING") return;
+  await db.report.update({ where: { id: reportId }, data: { status: "ACTIVE" } });
+  await db.notification.create({ data: { userId: r.userId, message: `The office confirmed it received your found item (${r.ref}). Thank you! It is now listed in Lost & Found.` } });
+  try { // matching must never block confirmation
+    const matches = await findMatches(r);
+    if (matches.length) {
+      const owners = await db.report.findMany({ where: { id: { in: matches.map((m) => m.id) } }, select: { userId: true, ref: true } });
+      await db.notification.createMany({ data: [
+        { userId: r.userId, message: `A possible match was found for your found item (${r.ref}).` },
+        ...owners.map((o) => ({ userId: o.userId, message: `A possible match was found for your lost item (${o.ref}).` })),
+      ] });
+    }
+  } catch {}
+  refresh();
+}
+
+/** Staff verified the claimant in person. Approving closes the other pending claims on the same item. */
 export async function adminReviewClaim(claimId: string, decision: "APPROVED" | "REJECTED"): Promise<void> {
   await requireAdmin();
   const c = await db.claim.findUnique({ where: { id: claimId }, include: { report: true } });
-  if (!c || c.status !== "PENDING") return;
+  if (!c || c.status !== "PENDING" || c.report.status !== "ACTIVE") return;
   await db.claim.update({ where: { id: claimId }, data: { status: decision } });
-  if (decision === "APPROVED") await db.report.update({ where: { id: c.reportId }, data: { status: "MATCHED" } });
-  await db.notification.createMany({ data: [
-    { userId: c.claimantId, message: decision === "APPROVED" ? `Your claim for ${c.report.ref} was approved by a moderator. The item is kept at: ${c.report.keptAt ?? "the finder will tell you"}.` : `Your claim for ${c.report.ref} was not approved by a moderator.` },
-    { userId: c.report.userId, message: `A moderator ${decision === "APPROVED" ? "approved" : "rejected"} a claim on your report ${c.report.ref}.` },
-  ] });
+  const notes = [{ userId: c.claimantId, message: decision === "APPROVED"
+    ? `Your claim for ${c.report.ref} was approved. Bring your UC ID to the Prefect of Discipline Office to collect it.`
+    : `Your claim for ${c.report.ref} was not approved.` }];
+  if (decision === "APPROVED") {
+    await db.report.update({ where: { id: c.reportId }, data: { status: "MATCHED" } });
+    const others = await db.claim.findMany({ where: { reportId: c.reportId, status: "PENDING", id: { not: claimId } }, select: { claimantId: true } });
+    await db.claim.updateMany({ where: { reportId: c.reportId, status: "PENDING", id: { not: claimId } }, data: { status: "REJECTED" } });
+    others.forEach((o) => notes.push({ userId: o.claimantId, message: `Your claim for ${c.report.ref} was not approved.` }));
+  }
+  await db.notification.createMany({ data: notes });
+  refresh();
+}
+
+/** The item was physically handed to the verified owner. */
+export async function markReturned(reportId: string): Promise<void> {
+  await requireAdmin();
+  const r = await db.report.findUnique({ where: { id: reportId }, include: { claims: { where: { status: "APPROVED" }, take: 1 } } });
+  if (!r || r.type !== "FOUND" || r.status !== "MATCHED") return;
+  await db.report.update({ where: { id: reportId }, data: { status: "RESOLVED" } });
+  const notes = [{ userId: r.userId, message: `Your found item (${r.ref}) was returned to its owner. Thank you for helping!` }];
+  if (r.claims[0]) notes.push({ userId: r.claims[0].claimantId, message: `Your item (${r.ref}) has been marked as returned.` });
+  await db.notification.createMany({ data: notes });
   refresh();
 }

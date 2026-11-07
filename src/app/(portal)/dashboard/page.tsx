@@ -14,7 +14,7 @@ export default async function Dashboard() {
     db.savedItem.count({ where: { userId: user.id, report: { hidden: false } } }),
     countPossibleMatches(user.id),
     db.report.count({ where: { userId: user.id, status: "RESOLVED" } }),
-    db.claim.count({ where: { status: "PENDING", report: { userId: user.id } } }),
+    db.report.count({ where: { userId: user.id, type: "FOUND", status: "PENDING" } }),
     db.notification.count({ where: { userId: user.id, read: false } }),
     db.report.findMany({
       where: { status: { not: "PENDING" }, hidden: false }, orderBy: { createdAt: "desc" }, take: 8,
@@ -27,7 +27,7 @@ export default async function Dashboard() {
     { label: "Possible Matches", n: matches, Icon: Sparkles }, { label: "Resolved", n: resolved, Icon: CheckCircle2 },
   ];
   const attention = [
-    { n: pendingClaims, text: "pending claims on your found items", href: "/my-reports", Icon: Inbox },
+    { n: pendingClaims, text: "found items to drop off at the office", href: "/my-reports", Icon: Inbox },
     { n: unread, text: "unread notifications", href: "/notifications", Icon: Bell },
     { n: matches, text: "possible matches for your reports", href: "/my-reports", Icon: Sparkles },
   ].filter((a) => a.n > 0);
@@ -96,7 +96,7 @@ export default async function Dashboard() {
           <section className="card p-4">
             <h2 className="mb-3 font-bold text-uc-dark">How it works</h2>
             <ol className="space-y-3 text-sm">
-              {["Report what you lost or found.", "We suggest possible matches.", "Owners prove it&apos;s theirs, then pick up the item."].map((t, i) => (
+              {["Report what you lost or found.", "We suggest possible matches.", "Owners claim it and collect it from the Prefect of Discipline Office."].map((t, i) => (
                 <li key={i} className="flex gap-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-uc text-xs font-bold text-white">{i + 1}</span><span dangerouslySetInnerHTML={{ __html: t }} /></li>))}
             </ol>
             <p className="mt-3 flex items-start gap-2 rounded-md bg-uc-bg p-2 text-xs text-uc-muted"><ShieldCheck size={14} className="mt-0.5 shrink-0" />Private details are never shown on public reports.</p>
