@@ -15,7 +15,7 @@ export default function LoginPage() {
         <div><label className="label" htmlFor="ucId">UC ID Number</label><input id="ucId" name="ucId" className="input" placeholder="8-digit UC ID" inputMode="numeric" maxLength={8} required /></div>
         <div><label className="label" htmlFor="password">Password</label><input id="password" name="password" type="password" className="input" required /></div>
         <Submit />
-        <div className="flex justify-between text-sm"><span className="text-uc-muted" title="Not yet implemented">Forgot password?</span><Link href="/signup" className="text-uc hover:underline">Create account</Link></div>
+        <div className="flex justify-between text-sm"><Link href="/forgot-password" className="text-uc hover:underline">Forgot password?</Link><Link href="/signup" className="text-uc hover:underline">Create account</Link></div>
       </form>
     </AuthCard>
   );

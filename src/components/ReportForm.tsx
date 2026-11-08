@@ -4,6 +4,8 @@ import { useFormState, useFormStatus } from "react-dom";
 import { CheckCircle2 } from "lucide-react";
 import { createReport, ReportState } from "@/app/actions/reports";
 import { CATEGORIES, LOCATIONS } from "@/lib/constants";
+import { DROPOFF_DAYS } from "@/lib/office";
+import OfficeInfo from "./OfficeInfo";
 
 function Submit({ text }: { text: string }) { const { pending } = useFormStatus(); return <button className="btn" disabled={pending}>{pending ? "Submitting…" : text}</button>; }
 
@@ -18,7 +20,8 @@ export default function ReportForm({ type }: { type: "LOST" | "FOUND" }) {
       <h2 className="text-lg font-semibold">Report submitted</h2>
       <p className="mt-1 text-sm text-uc-muted">Your reference number</p>
       <p className="my-2 text-xl font-bold tracking-wide text-uc-dark">{s.ref}</p>
-      <p className="mb-4 text-sm text-uc-muted">{lost ? "Keep this number to follow up on your report." : "Bring the item and this reference number to the Prefect of Discipline Office. Your report is listed once staff confirm receipt."}</p>
+      <p className="mb-4 text-sm text-uc-muted">{lost ? "Keep this number to follow up on your report." : `Bring the item and this reference number to the Prefect of Discipline Office within ${DROPOFF_DAYS} days. Your report is listed once staff confirm receipt.`}</p>
+      {!lost && <OfficeInfo className="mb-4 text-left" />}
       <div className="flex justify-center gap-2"><Link href="/lost-and-found" className="btn">Browse Lost &amp; Found</Link><Link href="/dashboard" className="btn-ghost">Dashboard</Link></div>
     </div>
   );
@@ -34,7 +37,7 @@ export default function ReportForm({ type }: { type: "LOST" | "FOUND" }) {
         <div><label className="label" htmlFor="approxTime">Approximate time</label><input id="approxTime" name="approxTime" type="time" className="input" /></div>
         <div className="sm:col-span-2"><label className="label" htmlFor="description">Description</label><textarea id="description" name="description" rows={3} className="input" placeholder="General description (this is shown publicly)" />{err("description")}</div>
         <div className="sm:col-span-2"><label className="label" htmlFor="features">Distinctive features</label><textarea id="features" name="features" rows={2} className="input" placeholder="Scratches, stickers, contents, serial no. (kept private; used to verify ownership)" />{err("features")}</div>
-        {!lost && <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 sm:col-span-2"><b>Drop-off required.</b> After submitting, bring the item to the Prefect of Discipline Office. Your report is listed publicly once staff confirm they received it.</p>}
+        {!lost && <OfficeInfo className="sm:col-span-2" />}
         <div className="sm:col-span-2"><label className="label" htmlFor="photo">Item photo (optional)</label><input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="input file:mr-3 file:rounded file:border-0 file:bg-uc-bg file:px-3 file:py-1 file:text-sm" /><p className="mt-1 text-xs text-uc-muted">JPG, PNG or WebP, up to 5 MB. Photos are public. Do not show faces, ID numbers, or other personal details.</p>{err("photo")}</div>
       </div>
       <div className="flex justify-end gap-2"><Link href="/dashboard" className="btn-ghost">Cancel</Link><Submit text={lost ? "Submit lost report" : "Submit found report"} /></div>

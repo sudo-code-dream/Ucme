@@ -7,11 +7,13 @@ import { toggleSave } from "@/app/actions/reports";
 import ClaimForm from "@/components/ClaimForm";
 import { findMatches } from "@/lib/matching";
 import FlagForm from "@/components/FlagForm";
+import OfficeInfo from "@/components/OfficeInfo";
+import { DROPOFF_DAYS } from "@/lib/office";
 
 export default async function Details({ params }: { params: { id: string } }) {
   const user = await requireUser();
   const r = await db.report.findUnique({ where: { id: params.id } });
-  if (!r || ((r.status === "PENDING" || r.hidden) && r.userId !== user.id && user.role !== "ADMIN")) notFound();
+  if (!r || ((r.status === "PENDING" || r.status === "EXPIRED" || r.hidden) && r.userId !== user.id && user.role !== "ADMIN")) notFound();
   const owner = r.userId === user.id;
   const matches = owner && r.status === "ACTIVE" ? await findMatches(r) : [];
   const saved = !!(await db.savedItem.findUnique({ where: { userId_reportId: { userId: user.id, reportId: r.id } } }));
@@ -20,7 +22,8 @@ export default async function Details({ params }: { params: { id: string } }) {
   return (
     <div className="max-w-3xl space-y-4">
       <Link href="/lost-and-found" className="text-sm text-uc hover:underline">← Back to Lost &amp; Found</Link>
-      {r.type === "FOUND" && r.status === "PENDING" && <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">Awaiting drop-off. Bring this item to the Prefect of Discipline Office. This report is not public until staff confirm receipt.</p>}
+      {r.type === "FOUND" && r.status === "PENDING" && <OfficeInfo deadline={new Date(r.createdAt.getTime() + DROPOFF_DAYS * 86_400_000)} />}
+      {r.status === "EXPIRED" && <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">This report expired because the item was not dropped off in time. If you still have it, bring it to the office and staff can reinstate it.</p>}
       {r.hidden && <p className="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">This report is hidden from public view by a moderator.</p>}
       <div className="card p-5">
         <div className="mb-3 flex flex-wrap items-start justify-between gap-3">

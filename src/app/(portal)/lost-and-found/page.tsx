@@ -10,7 +10,7 @@ type SP = { q?: string; type?: string; category?: string; location?: string; dat
 export default async function Browse({ searchParams: sp }: { searchParams: SP }) {
   await requireUser();
   const where: Prisma.ReportWhereInput = {
-    status: { not: "PENDING" }, hidden: false,
+    status: { in: ["ACTIVE", "MATCHED", "RESOLVED"] }, hidden: false,
     ...(sp.type === "LOST" || sp.type === "FOUND" ? { type: sp.type } : {}),
     ...(CATEGORIES.includes(sp.category ?? "") ? { category: sp.category } : {}),
     ...(LOCATIONS.includes(sp.location ?? "") ? { location: sp.location } : {}),

@@ -13,6 +13,7 @@ const fieldErrs = (e: ZodError) => { const f: Record<string, string> = {}; e.iss
 
 export async function createReport(type: "LOST" | "FOUND", _: ReportState, fd: FormData): Promise<ReportState> {
   const user = await requireUser(); // identity always comes from the session, never from the form
+  if (!user.emailVerified) return { error: "Please verify your email before submitting a report. Use the banner at the top of the page." };
   const p = reportSchema.safeParse(Object.fromEntries(fd));
   if (!p.success) return { error: "Please fix the highlighted fields.", fieldErrors: fieldErrs(p.error) };
   let photoUrl: string | null = null;
@@ -47,6 +48,7 @@ export async function toggleSave(reportId: string): Promise<void> {
 
 export async function submitClaim(reportId: string, _: ReportState, fd: FormData): Promise<ReportState> {
   const user = await requireUser();
+  if (!user.emailVerified) return { error: "Please verify your email before submitting a claim." };
   const p = claimSchema.safeParse(Object.fromEntries(fd));
   if (!p.success) return { error: p.error.issues[0].message };
   const report = await db.report.findUnique({ where: { id: reportId } });

@@ -1,0 +1,41 @@
+1) In model User, add these lines:
+  emailVerified   DateTime?
+  suspendedAt     DateTime?
+  suspendedReason String?
+  sessionVersion  Int       @default(0)
+  tokens          AuthToken[]
+
+2) Add at the end of schema.prisma:
+
+enum TokenType {
+  VERIFY_EMAIL
+  RESET_PASSWORD
+}
+
+model AuthToken {
+  id        String    @id @default(cuid())
+  userId    String
+  type      TokenType
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String
+  actorName  String
+  action     String
+  targetType String
+  targetId   String
+  detail     String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+3) Run: npx prisma migrate dev --name accounts_and_audit   (then restart npm run dev)

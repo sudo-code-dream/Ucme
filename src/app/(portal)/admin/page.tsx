@@ -23,14 +23,15 @@ export default async function Admin() {
     db.report.findMany({ orderBy: { createdAt: "desc" }, take: 20, select: { id: true, ref: true, title: true, type: true, hidden: true, photoUrl: true } }),
   ]);
   const [dropoffs, pickups] = await Promise.all([
-    db.report.findMany({ where: { type: "FOUND", status: "PENDING" }, orderBy: { createdAt: "asc" },
-      select: { id: true, ref: true, title: true, photoUrl: true, user: { select: { firstName: true, lastName: true, ucId: true } } } }),
+    db.report.findMany({ where: { type: "FOUND", status: { in: ["PENDING", "EXPIRED"] } }, orderBy: { createdAt: "asc" },
+      select: { id: true, ref: true, title: true, status: true, photoUrl: true, user: { select: { firstName: true, lastName: true, ucId: true } } } }),
     db.report.findMany({ where: { type: "FOUND", status: "MATCHED" },
       select: { id: true, ref: true, title: true, photoUrl: true, claims: { where: { status: "APPROVED" }, take: 1, select: { claimant: { select: { firstName: true, lastName: true, ucId: true } } } } } }),
   ]);
   return (
     <div className="space-y-6">
       <div><h1 className="page-title">Moderation</h1><p className="text-sm text-uc-muted">Admin only. Private details shown here must not be shared outside this review.</p></div>
+      <div className="flex gap-2"><Link href="/admin/users" className="btn-ghost">Manage users</Link><Link href="/admin/audit" className="btn-ghost">Audit log</Link></div>
 
       <section className="card"><h2 className="border-b border-uc-line px-4 py-3 font-semibold text-uc-dark">Awaiting drop-off ({dropoffs.length})</h2>
         {dropoffs.length === 0 && <p className="p-6 text-center text-sm text-uc-muted">No items waiting to be dropped off.</p>}
@@ -38,7 +39,7 @@ export default async function Admin() {
           <li key={r.id} className="flex flex-wrap items-center gap-3 p-4 text-sm">
             <Thumb url={r.photoUrl} />
             <div className="min-w-0 flex-1"><Link href={`/lost-and-found/${r.id}`} className="font-medium text-uc hover:underline">{r.title}</Link>
-              <span className="ml-2 text-xs text-uc-muted">{r.ref} · finder {r.user.firstName} {r.user.lastName} ({maskUcId(r.user.ucId)})</span></div>
+              <span className="ml-2 text-xs text-uc-muted">{r.ref}{r.status === "EXPIRED" ? " · EXPIRED" : ""} · finder {r.user.firstName} {r.user.lastName} ({maskUcId(r.user.ucId)})</span></div>
             <form action={confirmReceipt.bind(null, r.id)}><button className="btn">Confirm received</button></form>
           </li>))}</ul></section>
 

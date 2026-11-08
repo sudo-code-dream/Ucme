@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { createSession, destroySession } from "@/lib/session";
+import { sendVerification } from "@/lib/tokens";
 import { loginSchema, signupSchema } from "@/lib/validation";
 
 export type FormState = { error?: string; fieldErrors?: Record<string, string> };
@@ -20,7 +21,8 @@ export async function login(_: FormState, fd: FormData): Promise<FormState> {
     return { error: "Invalid UC ID or password." }; // same message for both: no account enumeration
   }
   await db.loginAttempt.deleteMany({ where: { ucId: p.data.ucId } });
-  await createSession(user.id);
+  if (user.suspendedAt) return { error: "This account is suspended. Please contact the Prefect of Discipline Office." };
+  await createSession(user.id, user.sessionVersion);
   redirect("/dashboard");
 }
 
@@ -35,7 +37,8 @@ export async function signup(data: Record<string, string>): Promise<FormState> {
   const exists = await db.user.findFirst({ where: { OR: [{ ucId: rest.ucId }, { email: rest.email }] } });
   if (exists) return { error: "An account with this UC ID or email already exists." };
   const user = await db.user.create({ data: { ...rest, passwordHash: await bcrypt.hash(password, 12) } });
-  await createSession(user.id);
+  await sendVerification(user).catch((e) => console.error(e)); // signup must not fail if email does
+  await createSession(user.id, user.sessionVersion);
   redirect("/dashboard");
 }
 

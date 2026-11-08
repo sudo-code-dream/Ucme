@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { markResolved } from "@/app/actions/manage";
+import { DROPOFF_DAYS } from "@/lib/office";
 
 const FILTERS = ["all", "lost", "found", "active", "resolved"];
 export default async function MyReports({ searchParams }: { searchParams: { filter?: string } }) {
@@ -24,7 +25,7 @@ export default async function MyReports({ searchParams }: { searchParams: { filt
             {rows.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-uc-muted">No reports found.</td></tr>}
             {rows.map((r) => (<tr key={r.id}>
               <td className="px-4 py-3 text-xs">{r.ref}</td><td className="px-4 py-3 font-medium">{r.title}</td>
-              <td className="px-4 py-3 capitalize">{r.type.toLowerCase()}</td><td className="px-4 py-3">{r.type === "FOUND" && r.status === "PENDING" ? "Awaiting drop-off" : r.type === "FOUND" && r.status === "MATCHED" ? "Ready for pickup" : r.status.charAt(0) + r.status.slice(1).toLowerCase()}</td>
+              <td className="px-4 py-3 capitalize">{r.type.toLowerCase()}</td><td className="px-4 py-3">{r.type === "FOUND" && r.status === "PENDING" ? `Awaiting drop-off (by ${new Date(r.createdAt.getTime() + DROPOFF_DAYS * 86_400_000).toLocaleDateString("en-PH", { month: "short", day: "numeric" })})` : r.status === "EXPIRED" ? "Expired (not dropped off)" : r.type === "FOUND" && r.status === "MATCHED" ? "Ready for pickup" : r.status.charAt(0) + r.status.slice(1).toLowerCase()}</td>
               <td className="whitespace-nowrap px-4 py-3">{r.createdAt.toLocaleDateString("en-PH", { dateStyle: "medium" })}</td>
               <td className="flex gap-3 px-4 py-3"><Link href={`/lost-and-found/${r.id}`} className="text-uc hover:underline">View</Link>
                 {r.type === "LOST" && r.status !== "RESOLVED" && <form action={markResolved.bind(null, r.id)}><button className="text-uc hover:underline">Mark resolved</button></form>}</td>

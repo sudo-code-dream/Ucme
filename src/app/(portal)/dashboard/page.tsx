@@ -17,7 +17,7 @@ export default async function Dashboard() {
     db.report.count({ where: { userId: user.id, type: "FOUND", status: "PENDING" } }),
     db.notification.count({ where: { userId: user.id, read: false } }),
     db.report.findMany({
-      where: { status: { not: "PENDING" }, hidden: false }, orderBy: { createdAt: "desc" }, take: 8,
+      where: { status: { in: ["ACTIVE", "MATCHED", "RESOLVED"] }, hidden: false }, orderBy: { createdAt: "desc" }, take: 8,
       select: { id: true, ref: true, type: true, status: true, title: true, category: true, location: true, createdAt: true }, // no private fields
     }),
   ]);

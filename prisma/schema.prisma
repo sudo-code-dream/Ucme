@@ -18,7 +18,9 @@ enum ReportStatus {
   ACTIVE
   MATCHED
   RESOLVED
+  EXPIRED
 }
+
 
 enum ClaimStatus {
   PENDING
@@ -29,6 +31,11 @@ enum ClaimStatus {
 enum Role {
   USER
   ADMIN
+}
+
+enum TokenType {
+  VERIFY_EMAIL
+  RESET_PASSWORD
 }
 
 model User {
@@ -53,6 +60,37 @@ model User {
   saved         SavedItem[]
   notifications Notification[]
   flags         Flag[]
+  emailVerified   DateTime?
+  suspendedAt     DateTime?
+  suspendedReason String?
+  sessionVersion  Int       @default(0)
+  tokens          AuthToken[]
+}
+
+model AuthToken {
+  id        String    @id @default(cuid())
+  userId    String
+  type      TokenType
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String
+  actorName  String
+  action     String
+  targetType String
+  targetId   String
+  detail     String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model Report {
@@ -132,3 +170,4 @@ model Flag {
 
   @@unique([reportId, reporterId])
 }
+

@@ -1,0 +1,12 @@
+In prisma/schema.prisma, add EXPIRED to the ReportStatus enum:
+
+enum ReportStatus {
+  PENDING
+  ACTIVE
+  MATCHED
+  RESOLVED
+  EXPIRED
+}
+
+Then run:  npx prisma migrate dev --name expired_status
+Production: npx prisma migrate deploy  (with your production DATABASE_URL / DIRECT_URL)

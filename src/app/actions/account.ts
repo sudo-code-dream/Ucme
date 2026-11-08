@@ -3,7 +3,8 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { deleteImage } from "@/lib/cloudinary";
-import { destroySession } from "@/lib/session";
+import { createSession, destroySession } from "@/lib/session";
+import { sendVerification } from "@/lib/tokens";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
@@ -23,7 +24,12 @@ export async function updateProfile(_: AccState, fd: FormData): Promise<AccState
   const p = profileSchema.safeParse(Object.fromEntries(fd));
   if (!p.success) return { error: p.error.issues[0].message };
   if (await db.user.findFirst({ where: { email: p.data.email, NOT: { id: user.id } } })) return { error: "That email is already in use." };
-  await db.user.update({ where: { id: user.id }, data: p.data }); // name and UC ID are not editable
+  const emailChanged = p.data.email !== user.email;
+  await db.user.update({ where: { id: user.id }, data: { ...p.data, ...(emailChanged ? { emailVerified: null } : {}) } }); // name and UC ID are not editable
+  if (emailChanged) {
+    await db.authToken.deleteMany({ where: { userId: user.id, type: "VERIFY_EMAIL" } });
+    await sendVerification({ id: user.id, email: p.data.email, firstName: user.firstName }).catch(() => {});
+  }
   revalidatePath("/profile");
   return { ok: true };
 }
@@ -33,7 +39,8 @@ export async function changePassword(_: AccState, fd: FormData): Promise<AccStat
   const p = pwSchema.safeParse(Object.fromEntries(fd));
   if (!p.success) return { error: p.error.issues[0].message };
   if (!(await bcrypt.compare(p.data.current, user.passwordHash))) return { error: "Current password is incorrect." };
-  await db.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(p.data.next, 12) } });
+  const updated = await db.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(p.data.next, 12), sessionVersion: { increment: 1 } } });
+  await createSession(updated.id, updated.sessionVersion); // keep this device signed in, sign out all others
   return { ok: true };
 }
 
