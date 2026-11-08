@@ -6,6 +6,7 @@ import { Bell, Bookmark, ChevronDown, FileText, LayoutDashboard, LogOut, Menu, S
 import { logout } from "@/app/actions/auth";
 import Brand from "./Brand";
 import MobileTabs from "./MobileTabs";
+import NotificationBell from "./NotificationBell";
 
 type Item = { href: string; label: string; Icon: typeof Bell };
 const MAIN: Item[] = [
@@ -47,9 +48,7 @@ export default function Shell({ isAdmin, name, initials, maskedId, unread, child
           <input name="q" placeholder="Search lost &amp; found items…" aria-label="Search items" className="input bg-uc-bg pl-9" />
         </form>
         <div className="ml-auto flex items-center gap-3">
-          <Link href="/notifications" aria-label="Notifications" className="relative rounded-md p-2 text-uc-muted hover:bg-uc-bg">
-            <Bell size={20} />{unread > 0 && <span className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-red-600" />}
-          </Link>
+          <NotificationBell unread={unread} />
           <div className="relative">
             <button className="flex items-center gap-2 rounded-md p-1 hover:bg-uc-bg" onClick={() => setMenu(!menu)} aria-expanded={menu}>
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-uc text-xs font-bold text-white">{initials}</span>

@@ -16,7 +16,7 @@ export async function markResolved(reportId: string): Promise<void> {
 export async function markAllRead(): Promise<void> {
   const user = await requireUser();
   await db.notification.updateMany({ where: { userId: user.id, read: false }, data: { read: true } });
-  revalidatePath("/notifications");
+  revalidatePath("/notifications"); revalidatePath("/", "layout"); // refresh the unread dot everywhere
 }
 
 /** Owner-only delete. People with pending claims are told the report was withdrawn (no details shared). */
