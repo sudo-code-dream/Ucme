@@ -65,6 +65,7 @@ model User {
   suspendedReason String?
   sessionVersion  Int       @default(0)
   tokens          AuthToken[]
+  emailAlerts Boolean @default(true)
 }
 
 model AuthToken {
@@ -171,3 +172,10 @@ model Flag {
   @@unique([reportId, reporterId])
 }
 
+model RateLimit {
+  id        String   @id @default(cuid())
+  key       String
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
+}

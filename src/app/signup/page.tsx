@@ -56,7 +56,7 @@ export default function SignupPage() {
         {step === 3 && <>{FIELDS[3].map(([k, l, , t]) => field(k, l, t))}<p className="text-xs text-uc-muted">Minimum 8 characters.</p>
           <label className="flex items-start gap-2 text-xs text-uc-muted">
             <input type="checkbox" className="mt-0.5" checked={d.consent === "yes"} onChange={(e) => set("consent", e.target.checked ? "yes" : "")} />
-            <span>I agree that UCme may collect and process my name, UC ID, email, contact number and university details only for lost-and-found coordination, in line with the Data Privacy Act of 2012 (RA 10173). My contact details are never shown on public reports.</span>
+            <span>I agree that UCme may collect and process my name, UC ID, email, contact number and university details only for lost-and-found coordination, in line with the Data Privacy Act of 2012 (RA 10173). My contact details are never shown on public reports. Read the <a href="/privacy" target="_blank" rel="noopener" className="font-semibold text-uc underline">Privacy Notice</a> and <a href="/terms" target="_blank" rel="noopener" className="font-semibold text-uc underline">Terms of Use</a>.</span>
           </label>
           {errs.consent && <p className="text-xs text-red-600">{errs.consent}</p>}</>}
         <div className="flex justify-between gap-2">

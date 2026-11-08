@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { createSession, destroySession } from "@/lib/session";
 import { sendVerification } from "@/lib/tokens";
+import { clientIp, rateLimit } from "@/lib/ratelimit";
 import { loginSchema, signupSchema } from "@/lib/validation";
 
 export type FormState = { error?: string; fieldErrors?: Record<string, string> };
@@ -11,6 +12,8 @@ export type FormState = { error?: string; fieldErrors?: Record<string, string> }
 export async function login(_: FormState, fd: FormData): Promise<FormState> {
   const p = loginSchema.safeParse(Object.fromEntries(fd));
   if (!p.success) return { error: p.error.issues[0].message };
+  // Network-wide cap is generous because many students share campus Wi-Fi addresses
+  if (!(await rateLimit(`login:${clientIp()}`, 200, 15 * 60_000))) return { error: "Too many attempts from this network. Please wait a few minutes." };
   // Throttle: max 5 failed attempts per UC ID in 15 minutes
   const fails = await db.loginAttempt.count({ where: { ucId: p.data.ucId, createdAt: { gte: new Date(Date.now() - 15 * 60 * 1000) } } });
   if (fails >= 5) return { error: "Too many failed attempts. Please try again in 15 minutes." };
@@ -27,6 +30,7 @@ export async function login(_: FormState, fd: FormData): Promise<FormState> {
 }
 
 export async function signup(data: Record<string, string>): Promise<FormState> {
+  if (!(await rateLimit(`signup:${clientIp()}`, 20, 3_600_000))) return { error: "Too many sign-up attempts from this network. Please try again later." };
   const p = signupSchema.safeParse(data);
   if (!p.success) {
     const fieldErrors: Record<string, string> = {};

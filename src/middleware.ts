@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-const PUBLIC = ["/", "/login", "/signup", "/forgot-password", "/reset-password", "/verify-email", "/suspended"];
+const PUBLIC = ["/", "/login", "/signup", "/forgot-password", "/reset-password", "/verify-email", "/suspended", "/privacy", "/terms"];
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const token = req.cookies.get("ucme_session")?.value;

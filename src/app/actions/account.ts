@@ -64,3 +64,9 @@ export async function deleteAccount(_: AccState, fd: FormData): Promise<AccState
   destroySession();
   redirect("/login");
 }
+
+export async function updateAlerts(_: AccState, fd: FormData): Promise<AccState> {
+  const user = await requireUser();
+  await db.user.update({ where: { id: user.id }, data: { emailAlerts: fd.get("emailAlerts") === "on" } });
+  return { ok: true };
+}

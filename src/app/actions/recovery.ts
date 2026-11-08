@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { consumeToken, sendReset, sendVerification } from "@/lib/tokens";
+import { clientIp, rateLimit } from "@/lib/ratelimit";
 
 export type RecState = { error?: string; ok?: boolean };
 
@@ -11,6 +12,7 @@ export type RecState = { error?: string; ok?: boolean };
 export async function forgotPassword(_: RecState, fd: FormData): Promise<RecState> {
   const email = z.string().trim().email().safeParse(fd.get("email"));
   if (!email.success) return { error: "Enter a valid email address." };
+  if (!(await rateLimit(`forgot:${clientIp()}`, 20, 3_600_000))) return { error: "Too many requests. Please try again later." };
   const user = await db.user.findUnique({ where: { email: email.data } });
   if (user && !user.suspendedAt) {
     const recent = await db.authToken.count({ where: { userId: user.id, type: "RESET_PASSWORD", createdAt: { gte: new Date(Date.now() - 3_600_000) } } });

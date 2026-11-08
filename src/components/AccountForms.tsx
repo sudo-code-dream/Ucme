@@ -1,6 +1,6 @@
 "use client";
 import { useFormState, useFormStatus } from "react-dom";
-import { AccState, changePassword, deleteAccount, updateProfile } from "@/app/actions/account";
+import { AccState, changePassword, deleteAccount, updateAlerts, updateProfile } from "@/app/actions/account";
 
 function Save({ text }: { text: string }) { const { pending } = useFormStatus(); return <button className="btn" disabled={pending}>{pending ? "Saving…" : text}</button>; }
 const Msg = ({ s, ok }: { s: AccState; ok: string }) => s.error ? <p role="alert" className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-700">{s.error}</p>
@@ -42,3 +42,14 @@ export function DeleteAccountForm() {
   );
 }
 function DeleteBtn() { const { pending } = useFormStatus(); return <button className="btn !bg-red-600 hover:!bg-red-700" disabled={pending}>{pending ? "Deleting…" : "Delete my account"}</button>; }
+
+export function AlertsForm({ enabled }: { enabled: boolean }) {
+  const [s, action] = useFormState<AccState, FormData>(updateAlerts, {});
+  return (
+    <form action={action} className="space-y-3">
+      <Msg s={s} ok="Preference saved." />
+      <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="emailAlerts" defaultChecked={enabled} className="mt-0.5" /><span>Email me about possible matches, claim decisions, and returned items.</span></label>
+      <Save text="Save preference" />
+    </form>
+  );
+}

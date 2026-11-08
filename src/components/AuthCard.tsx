@@ -1,4 +1,5 @@
 import { Bell, Search, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 import Brand from "./Brand";
 
 const POINTS = [
@@ -27,6 +28,7 @@ export default function AuthCard({ title, children }: { title: string; children:
             <h1 className="mb-5 text-xl font-bold text-uc-dark">{title}</h1>
             {children}
           </div>
+          <p className="mt-4 text-center text-xs text-uc-muted"><Link href="/privacy" className="hover:underline">Privacy Notice</Link> · <Link href="/terms" className="hover:underline">Terms of Use</Link></p>
         </div>
       </div>
     </main>

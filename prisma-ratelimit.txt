@@ -1,0 +1,11 @@
+Add at the end of prisma/schema.prisma:
+
+model RateLimit {
+  id        String   @id @default(cuid())
+  key       String
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
+}
+
+Then run:  npx prisma migrate dev --name rate_limits   (restart npm run dev; on live: npx prisma migrate deploy)

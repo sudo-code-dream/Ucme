@@ -79,7 +79,7 @@ export default function Shell({ isAdmin, name, initials, maskedId, unread, child
         </form>
       </aside>
 
-      <main className="px-4 pb-28 pt-20 md:ml-64 md:px-8 md:pb-10"><div className="mx-auto max-w-6xl">{children}</div></main>
+      <main className="px-4 pb-28 pt-20 md:ml-64 md:px-8 md:pb-10"><div className="mx-auto max-w-6xl">{children}<footer className="mt-10 border-t border-uc-line pt-4 text-xs text-uc-muted"><Link href="/privacy" className="hover:underline">Privacy Notice</Link> · <Link href="/terms" className="hover:underline">Terms of Use</Link> · UCme prototype</footer></div></main>
       <MobileTabs unread={unread} />
     </div>
   );

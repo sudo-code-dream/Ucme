@@ -1,0 +1,5 @@
+In model User, add this line:
+  emailAlerts Boolean @default(true)
+
+Then run:  npx prisma migrate dev --name email_alerts   (restart npm run dev afterward)
+Production: npx prisma migrate deploy

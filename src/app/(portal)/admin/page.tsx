@@ -28,10 +28,29 @@ export default async function Admin() {
     db.report.findMany({ where: { type: "FOUND", status: "MATCHED" },
       select: { id: true, ref: true, title: true, photoUrl: true, claims: { where: { status: "APPROVED" }, take: 1, select: { claimant: { select: { firstName: true, lastName: true, ucId: true } } } } } }),
   ]);
+  const [nDrop, nPick, nClaims, nFlags, nActive, nResolved] = await Promise.all([
+    db.report.count({ where: { type: "FOUND", status: "PENDING" } }),
+    db.report.count({ where: { type: "FOUND", status: "MATCHED" } }),
+    db.claim.count({ where: { status: "PENDING" } }),
+    db.report.count({ where: { flags: { some: { resolved: false } } } }),
+    db.report.count({ where: { status: "ACTIVE", hidden: false } }),
+    db.report.count({ where: { status: "RESOLVED" } }),
+  ]);
+  const stats: [string, number, boolean][] = [["Awaiting drop-off", nDrop, true], ["Ready for pickup", nPick, true], ["Pending claims", nClaims, true], ["Open flags", nFlags, true], ["Active reports", nActive, false], ["Resolved (all time)", nResolved, false]];
   return (
     <div className="space-y-6">
       <div><h1 className="page-title">Moderation</h1><p className="text-sm text-uc-muted">Admin only. Private details shown here must not be shared outside this review.</p></div>
       <div className="flex gap-2"><Link href="/admin/users" className="btn-ghost">Manage users</Link><Link href="/admin/audit" className="btn-ghost">Audit log</Link></div>
+
+      <section className="card grid grid-cols-2 divide-x divide-y divide-uc-line lg:grid-cols-6 lg:divide-y-0">
+        {stats.map(([label, n, attention]) => (
+          <div key={label} className="p-4"><p className={`text-2xl font-bold ${attention && n > 0 ? "text-amber-600" : "text-uc-dark"}`}>{n}</p><p className="text-xs text-uc-muted">{label}</p></div>))}
+      </section>
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className="text-uc-muted">Records for the office:</span>
+        <a href="/api/admin/export?kind=reports" download className="btn-ghost">Export reports (CSV)</a>
+        <a href="/api/admin/export?kind=audit" download className="btn-ghost">Export audit log (CSV)</a>
+      </div>
 
       <section className="card"><h2 className="border-b border-uc-line px-4 py-3 font-semibold text-uc-dark">Awaiting drop-off ({dropoffs.length})</h2>
         {dropoffs.length === 0 && <p className="p-6 text-center text-sm text-uc-muted">No items waiting to be dropped off.</p>}
