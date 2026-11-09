@@ -6,7 +6,7 @@ import { Bell } from "lucide-react";
 import { getRecentNotifications } from "@/app/actions/notifications";
 import { markAllRead } from "@/app/actions/manage";
 
-type Item = { id: string; message: string; read: boolean; createdAt: string };
+type Item = { id: string; message: string; read: boolean; reportId: string | null; createdAt: string };
 
 const ago = (iso: string) => {
   const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -66,10 +66,10 @@ export default function NotificationBell({ unread }: { unread: number }) {
             {!error && items?.length === 0 && <p className="p-6 text-center text-sm text-uc-muted">No notifications yet.</p>}
             {!error && items && items.length > 0 && (
               <ul className="divide-y divide-uc-line">{items.map((n) => (
-                <li key={n.id} className={`flex gap-3 px-4 py-3 text-sm ${n.read ? "" : "bg-blue-50/60"}`}>
+                <li key={n.id}><a href={n.reportId ? `/api/notifications/${n.id}` : "/notifications"} className={`flex gap-3 px-4 py-3 text-sm hover:bg-uc-bg ${n.read ? "" : "bg-blue-50/60"}`}>
                   <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.read ? "bg-transparent" : "bg-uc"}`} />
                   <div><p>{n.message}</p><p className="text-xs text-uc-muted">{ago(n.createdAt)}</p></div>
-                </li>))}</ul>)}
+                </a></li>))}</ul>)}
           </div>
           <Link href="/notifications" onClick={() => setOpen(false)} className="block border-t border-uc-line px-4 py-3 text-center text-sm font-semibold text-uc hover:bg-uc-bg">View all notifications</Link>
         </div>

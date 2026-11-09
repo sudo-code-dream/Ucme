@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const stale = await db.report.findMany({ where: { type: "FOUND", status: "PENDING", createdAt: { lt: cutoff } }, select: { id: true, ref: true, userId: true } });
   if (stale.length) {
     await db.report.updateMany({ where: { id: { in: stale.map((s) => s.id) } }, data: { status: "EXPIRED" } });
-    await notify(stale.map((s) => ({ userId: s.userId, email: true,
+    await notify(stale.map((s) => ({ userId: s.userId, reportId: s.id, email: true,
       message: `Your found report ${s.ref} expired because the item wasn't dropped off within ${DROPOFF_DAYS} days. If you still have it, bring it to the office and staff can reinstate it.` })));
   }
   // Housekeeping: keep only what is still useful

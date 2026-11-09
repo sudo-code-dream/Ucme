@@ -29,13 +29,13 @@ export async function createReport(type: "LOST" | "FOUND", _: ReportState, fd: F
   const ref = `${type === "LOST" ? "LST" : "FND"}-${new Date().toISOString().slice(2, 7).replace("-", "")}-${randomBytes(2).toString("hex").toUpperCase()}`;
   const { occurredOn, keptAt, ...rest } = p.data;
   const created = await db.report.create({ data: { ...rest, photoUrl, ref, type, userId: user.id, occurredOn: new Date(occurredOn), keptAt: type === "FOUND" ? "Prefect of Discipline Office" : null, status: type === "FOUND" ? "PENDING" : "ACTIVE" } });
-  if (type === "FOUND") await db.notification.create({ data: { userId: user.id, message: `Please bring your found item (${created.ref}) to the Prefect of Discipline Office. It will be listed once staff confirm receipt.` } });
+  if (type === "FOUND") await db.notification.create({ data: { userId: user.id, reportId: created.id, message: `Please bring your found item (${created.ref}) to the Prefect of Discipline Office. It will be listed once staff confirm receipt.` } });
   try { // matching must never block a submission
     const matches = type === "LOST" ? await findMatches(created) : []; // found items are matched once the office confirms receipt
     if (matches.length) {
-      await db.notification.create({ data: { userId: user.id, message: `A possible match was found for your ${type === "LOST" ? "lost" : "found"} item (${created.ref}). Check Lost & Found.` } });
-      const owners = await db.report.findMany({ where: { id: { in: matches.map((m) => m.id) } }, select: { userId: true, ref: true } });
-      await notify(owners.map((o) => ({ userId: o.userId, email: true, message: `A possible match was found for your ${type === "LOST" ? "found" : "lost"} item (${o.ref}).` })));
+      await db.notification.create({ data: { userId: user.id, reportId: created.id, message: `A possible match was found for your ${type === "LOST" ? "lost" : "found"} item (${created.ref}). Check Lost & Found.` } });
+      const owners = await db.report.findMany({ where: { id: { in: matches.map((m) => m.id) } }, select: { id: true, userId: true, ref: true } });
+      await notify(owners.map((o) => ({ userId: o.userId, reportId: o.id, email: true, message: `A possible match was found for your ${type === "LOST" ? "found" : "lost"} item (${o.ref}).` })));
     }
   } catch {}
   revalidatePath("/dashboard");

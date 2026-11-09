@@ -1,0 +1,15 @@
+1) In model Notification, add these two lines:
+  reportId String?
+  report   Report? @relation(fields: [reportId], references: [id], onDelete: SetNull)
+v
+2) In model Report, add this line:
+  notifications Notification[]
+
+3) Install the QR code package (for the printable poster page):
+   npm install qrcode
+   npm install -D @types/qrcode
+
+4) Run:  npx prisma migrate dev --name notification_links   (restart npm run dev; on live: npx prisma migrate deploy)
+
+Notes: old notifications have no link (they just open the notifications page). If a report is deleted, the link on its
+notifications is removed automatically. Set APP_URL to your live address so the poster QR code points to the right site.

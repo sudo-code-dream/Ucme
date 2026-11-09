@@ -11,11 +11,16 @@ export default async function Notifications() {
         {list.some((n) => !n.read) && <form action={markAllRead}><button className="btn-ghost">Mark all as read</button></form>}</div>
       <div className="card divide-y divide-uc-line">
         {list.length === 0 && <p className="p-10 text-center text-sm text-uc-muted">No notifications yet.</p>}
-        {list.map((n) => (
-          <div key={n.id} className={`flex gap-3 p-4 text-sm ${n.read ? "" : "bg-blue-50/60"}`}>
+        {list.map((n) => {
+          const body = (<>
             <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.read ? "bg-transparent" : "bg-uc"}`} />
-            <div><p>{n.message}</p><p className="text-xs text-uc-muted">{n.createdAt.toLocaleString("en-PH", { dateStyle: "medium", timeStyle: "short" })}</p></div>
-          </div>))}
+            <div><p>{n.message}</p><p className="text-xs text-uc-muted">{n.createdAt.toLocaleString("en-PH", { dateStyle: "medium", timeStyle: "short" })}{n.reportId && <span className="ml-2 font-semibold text-uc">View report →</span>}</p></div>
+          </>);
+          const cls = `flex gap-3 p-4 text-sm ${n.read ? "" : "bg-blue-50/60"}`;
+          return n.reportId
+            ? <a key={n.id} href={`/api/notifications/${n.id}`} className={`${cls} hover:bg-uc-bg`}>{body}</a>
+            : <div key={n.id} className={cls}>{body}</div>;
+        })}
       </div>
     </div>
   );

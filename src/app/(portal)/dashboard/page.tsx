@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Bell, Bookmark, CheckCircle2, FilePlus, FileText, PackageSearch, Search, Sparkles, ShieldCheck, Inbox } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import InstallPrompt from "@/components/InstallPrompt";
 import { countPossibleMatches } from "@/lib/matching";
 
 const greeting = () => { const h = new Date().getHours(); return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"; };
@@ -46,6 +47,8 @@ export default async function Dashboard() {
           <Link href="/lost-and-found" className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-blue-100 hover:text-white"><Search size={16} />Browse</Link>
         </div>
       </section>
+
+      <InstallPrompt />
 
       <section className="card grid grid-cols-2 divide-x divide-y divide-uc-line lg:grid-cols-4 lg:divide-y-0">
         {stats.map(({ label, n, Icon }) => (

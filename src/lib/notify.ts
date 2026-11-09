@@ -3,7 +3,7 @@ import { sendEmail } from "./email";
 import { renderEmail } from "./email-template";
 import { appUrl } from "./tokens";
 
-type Item = { userId: string; message: string; email?: boolean };
+type Item = { userId: string; message: string; email?: boolean; reportId?: string };
 
 /**
  * Always creates the in-app notification. When `email` is true it also sends one email per user
@@ -13,7 +13,7 @@ type Item = { userId: string; message: string; email?: boolean };
  */
 export async function notify(items: Item[]) {
   if (!items.length) return;
-  await db.notification.createMany({ data: items.map(({ userId, message }) => ({ userId, message })) });
+  await db.notification.createMany({ data: items.map(({ userId, message, reportId }) => ({ userId, message, reportId })) });
 
   const grouped = new Map<string, string[]>();
   items.filter((i) => i.email).forEach((i) => grouped.set(i.userId, [...(grouped.get(i.userId) ?? []), i.message]));

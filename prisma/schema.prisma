@@ -117,6 +117,7 @@ model Report {
   saved       SavedItem[]
   flags       Flag[]
   createdAt   DateTime     @default(now())
+  notifications Notification[]
 
   @@index([type, status, category])
 }
@@ -149,6 +150,8 @@ model Notification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
+  reportId String?
+  report   Report? @relation(fields: [reportId], references: [id], onDelete: SetNull)
 }
 
 model LoginAttempt {
